@@ -1,0 +1,22 @@
+
+Feature:
+
+Dev Personality Quiz Matching
+
+Epic:
+
+Identify a user’s developer workflow style through an interactive quiz and use it to improve match recommendations.
+
+User Stories (6 Total):
+
+As a user, I want to see an introduction to the Dev Personality Quiz so that I understand why it matters.
+
+As a new user, I want to answer quiz questions about my coding habits so that the app can identify my personality type.
+
+As a user, I want the quiz UI to feel like a terminal or dev environment so that the experience matches my interests.
+
+As a user, I want to see my personality type and a short explanation after finishing the quiz so that I understand my workflow style.
+
+As a user, I want the app to use my personality type to recommend compatible matches so that I can connect with people who match my coding style.
+
+As a returning user, I want the option to retake the quiz so that my personality type can update as my coding habits change.
