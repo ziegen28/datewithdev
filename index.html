@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DateWithDev — Dev Personality (enhanced UI)</title>
+  <title>DateWithDev — Dev Personality (final single-file)</title>
   <style>
     /* -------------------------
        THEME / ROOT
@@ -17,7 +17,7 @@
       --text-primary:#e4f0ff;
       --text-secondary:#9bb0c6;
       --glass: rgba(255,255,255,0.02);
-      --card-bg: rgba(8,17,24,0.7);
+      --card-bg: rgba(8,17,24,0.75);
       --danger:#ff6b6b;
       --focus:#fdd649;
       --shadow: 0 18px 50px rgba(0,0,0,0.55);
@@ -36,11 +36,12 @@
     }
 
     * { box-sizing: border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       min-height:100vh;
       font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-      background: radial-gradient(circle at top, rgba(62,234,160,0.04), transparent 60%), var(--bg);
+      background: radial-gradient(circle at top, rgba(62,234,160,0.03), transparent 55%), var(--bg);
       color:var(--text-primary);
       display:flex;
       align-items:center;
@@ -55,7 +56,7 @@
       width:min(1100px, 100%);
       border-radius:18px;
       border:1px solid var(--shell-border);
-      background: linear-gradient(145deg, rgba(0,0,0,0.25), var(--muted-strong));
+      background: linear-gradient(145deg, rgba(0,0,0,0.2), var(--muted-strong));
       box-shadow: var(--shadow);
       overflow:hidden;
       display:grid;
@@ -195,6 +196,22 @@
     /* small niceties */
     .small-muted{ color:var(--text-secondary); font-size:0.9rem; }
 
+    /* INTRO / LOADING */
+    .intro-overlay{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.75)); z-index:1200;
+      flex-direction:column; gap:12px; transition:opacity .35s ease;
+    }
+    .intro-card{ padding:22px 28px; border-radius:12px; border:1px solid var(--shell-border); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); text-align:center; width:min(720px,92%); }
+    .intro-logo{ width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent-strong)); display:inline-flex; align-items:center; justify-content:center; color:#041109; font-weight:800; font-size:1.35rem; }
+    .intro-title{ font-size:1.5rem; margin-top:10px; }
+    .intro-sub{ color:var(--text-secondary); margin-top:6px; font-size:0.95rem; }
+
+    .loading-dots{ display:inline-flex; gap:6px; margin-top:8px; }
+    .dot{ width:10px; height:10px; border-radius:999px; background:rgba(255,255,255,0.06); animation:blinkDot 1s infinite; }
+    .dot:nth-child(2){ animation-delay: .15s; }
+    .dot:nth-child(3){ animation-delay: .3s; }
+    @keyframes blinkDot{ 0%{opacity:.25}50%{opacity:1}100%{opacity:.25} }
+
     /* responsiveness */
     @media (max-width:700px){
       .deck{ width:88vw; height:56vw; }
@@ -242,7 +259,7 @@
           <div class="meta-grid">
             <div class="meta-card">
               <p class="meta-label">Estimated time</p>
-              <p class="meta-value" id="etaBadge">≈2 min · 4 prompts</p>
+              <p class="meta-value" id="etaBadge">≈3–4 min · 6–8 prompts</p>
             </div>
             <div class="meta-card">
               <p class="meta-label">Signal</p>
@@ -287,7 +304,26 @@
       </aside>
 
       <!-- CONTENT -->
-      <section style="padding:0;">
+      <section style="padding:0; position:relative;">
+
+        <!-- INTRO OVERLAY (Animated front page + loading) -->
+        <div id="introOverlay" class="intro-overlay" role="dialog" aria-modal="true" style="display:flex;">
+          <div class="intro-card">
+            <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+              <div class="intro-logo" aria-hidden="true">DW</div>
+            </div>
+            <div class="intro-title" style="font-weight:700;margin-top:10px;">DateWithDev</div>
+            <div class="intro-sub">Find collaborators who complement your dev rhythm — keyboard-first, stack-aware, and delightfully nerdy.</div>
+            <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;">
+              <button id="introStartBtn" class="btn primary">Launch scan</button>
+              <button id="introSkipBtn" class="btn ghost">Use app</button>
+            </div>
+            <div class="loading-dots" style="display:none;" id="introLoading">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div style="margin-top:10px;" class="small-muted">Tip: Press <kbd>→</kbd> to advance, <kbd>←</kbd> to go back while in quiz.</div>
+          </div>
+        </div>
 
         <!-- HOME -->
         <div id="homeScreen" class="panel" role="region" aria-label="Home">
@@ -321,7 +357,7 @@
         <div id="quizScreen" class="panel hidden" role="region" aria-label="Quiz">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <h2 style="margin:0;">Dev Personality Quiz</h2>
-            <div class="small-muted">Q<span id="progressCount">1</span>/<span id="totalQuestions">4</span> • <span id="progressPercent">0%</span></div>
+            <div class="small-muted">Q<span id="progressCount">1</span>/<span id="totalQuestions">8</span> • <span id="progressPercent">0%</span></div>
           </div>
 
           <div style="margin-top:12px;">
@@ -396,11 +432,6 @@
               <div id="allMatchesGrid" class="match-grid"></div>
             </div>
           </div>
-
-          <div id="historyPanel" class="history-panel hidden" style="margin-top:12px;">
-            <h4 style="margin:0 0 8px 0;">Attempt History</h4>
-            <div id="historyList" class="small-muted"></div>
-          </div>
         </div>
 
         <!-- PROFILE EDITOR -->
@@ -421,40 +452,68 @@
           </div>
         </div>
 
+        <!-- SWIPE PAGE (optional full-screen modal alternative) -->
+        <div id="swipeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="swipeTitle">
+          <div class="modal-surface" style="max-width:420px;">
+            <header style="display:flex;justify-content:space-between;align-items:center;">
+              <h2 id="swipeTitle">DevSwipe</h2>
+              <button id="closeSwipe" class="btn ghost">close</button>
+            </header>
+
+            <div style="margin-top:12px;">
+              <div id="swipeDeckModal" class="deck" style="height:420px;"></div>
+
+              <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;">
+                <button id="modalDislike" class="icon-btn" title="Nope">✖</button>
+                <button id="modalLike" class="icon-btn" title="Like">❤</button>
+              </div>
+
+              <div style="margin-top:12px;">
+                <h4 style="margin:0 0 8px 0;">All suggestions</h4>
+                <div id="allMatchesGridModal" class="match-grid"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div id="primerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="primerTitle">
+          <div class="modal-surface">
+            <header style="display:flex;justify-content:space-between;align-items:center;">
+              <h2 id="primerTitle">Why this scan matters</h2>
+              <button id="closePrimer" class="btn ghost">close</button>
+            </header>
+            <ul style="margin-top:12px;color:var(--text-secondary);">
+              <li>Transforms quiz answers into compatibility hints on every profile.</li>
+              <li>Feeds the match engine with collaboration + delivery signals.</li>
+              <li>Refresh the signal every 30 days to keep recommendations current.</li>
+            </ul>
+          </div>
+        </div>
+
       </section>
     </div>
 
-    <!-- PRIMER MODAL -->
-    <div id="primerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="primerTitle">
-      <div class="modal-surface">
-        <header style="display:flex;justify-content:space-between;align-items:center;">
-          <h2 id="primerTitle">Why this scan matters</h2>
-          <button id="closePrimer" class="btn ghost">close</button>
-        </header>
-        <ul style="margin-top:12px;color:var(--text-secondary);">
-          <li>Transforms quiz answers into compatibility hints on every profile.</li>
-          <li>Feeds the match engine with collaboration + delivery signals.</li>
-          <li>Refresh the signal every 30 days to keep recommendations current.</li>
-        </ul>
-      </div>
-    </div>
-
+    <!-- FOOTER: small place to keep keyboard tips -->
+    <footer style="padding:8px 18px;border-top:1px solid var(--shell-border);font-size:0.85rem;color:var(--text-secondary);display:flex;justify-content:space-between;">
+      <div>Tip: keyboard arrows work in quiz & results (← prev, → next). Press <strong>R</strong> to retake quickly.</div>
+      <div>Local only — data saved in browser storage.</div>
+    </footer>
   </main>
 
   <script>
 /* ============================
-   Single-file app logic (enhanced UI)
-   Preserves original state keys and quiz logic
+   FINAL SINGLE-FILE APP LOGIC
    ============================ */
 
-const STORAGE_KEY = 'dwd.quiz.state';
-const HISTORY_KEY = 'dwd.quiz.history';
-const PROFILE_KEY = 'dwd.profile';
-const THEME_KEY = 'dwd.theme';
+const STORAGE_KEY = 'dwd.quiz.state.v2';
+const HISTORY_KEY = 'dwd.quiz.history.v2';
+const PROFILE_KEY = 'dwd.profile.v2';
+const THEME_KEY = 'dwd.theme.v2';
 const COOLDOWN_DAYS = 30;
 const MS_PER_DAY = 24*60*60*1000;
 
-/* ---------- Data from original ---------- */
+/* ---------- Expanded quiz questions ---------- */
 const questions = [
   { id:'collab-style', dimension:'collaboration', prompt:'How do you prefer to solve thorny bugs?', helper:'Signal the style that keeps you in flow.', options:[
     { label:'Spin up a mob session', hint:'Bandwidth beats latency', score:3 },
@@ -476,8 +535,29 @@ const questions = [
     { label:'Read/docs + try sample project', hint:'Layered learning', score:2 },
     { label:'Take a structured course', hint:'Curriculum first', score:1 },
   ]},
+  { id:'communication', dimension:'collaboration', prompt:'How do you prefer to give feedback?', helper:'Synchronous vs asynchronous', options:[
+    { label:'In a live screen-share', hint:'Fast, human, contextual', score:3 },
+    { label:'Detailed PR comments', hint:'Documented and reviewable', score:2 },
+    { label:'Short notes + examples', hint:'Lightweight and async', score:1 },
+  ]},
+  { id:'experimentation', dimension:'growth', prompt:'When exploring a new idea you:', helper:'Risk appetite in prototyping', options:[
+    { label:'Ship a quick proto to test', hint:'Fail fast', score:3 },
+    { label:'Plan and iterate carefully', hint:'Measured exploration', score:2 },
+    { label:'Read & study before touching code', hint:'Theory first', score:1 },
+  ]},
+  { id:'ops-safety', dimension:'delivery', prompt:'Your stance on rollbacks and canaries is:', helper:'How you balance risk & uptime', options:[
+    { label:'Automate canaries + rollbacks', hint:'Safety by default', score:3 },
+    { label:'Manual checks then rollout', hint:'Careful but manual', score:2 },
+    { label:'Small releases rarely', hint:'Minimize changes', score:1 },
+  ]},
+  { id:'workflow', dimension:'tooling', prompt:'How do you structure your workspace?', helper:'Opinionated setups vs ephemeral', options:[
+    { label:'Dotfiles and reproducible envs', hint:'Portable and fast', score:3 },
+    { label:'Team-shared containers', hint:'Standardized stacks', score:2 },
+    { label:'Ad-hoc per-project', hint:'Flexible, personal', score:1 },
+  ]},
 ];
 
+/* ---------- Profiles and candidates (enriched) ---------- */
 const profiles = {
   collaboration: { name:'Pair Programming Catalyst', summary:'Energized by synchronous debugging and quick signal boosts.', strengths:['Spins up live pairing rooms to unblock complex issues.','Translates fuzzy ideas into concrete next steps for squads.','Keeps communication latency low across channels.'], actions:['Host a weekly live debug jam with high-signal matches.','Filter matches for ops-focused partners to balance speed vs. safety.','Share your pairing availability in profile highlights.'], matchHint:'Thrives when matched with release-minded pilots who offer guardrails.', idealPartners:['delivery','tooling'], stretchPartners:['growth'] },
   tooling: { name:'Terminal Tactician', summary:'Lives in dotfiles, bending the shell to every whim.', strengths:['Automates repetitive workflows for everyone in the room.','Optimizes environments for fast feedback and low friction.','Evangelizes keyboard-first shortcuts that keep momentum up.'], actions:['Swap setup scripts with makers who crave tighter loops.','Add a snippet of your dotfiles to your profile portfolio.','Pair with a growth-focused dev to co-build onboarding macros.'], matchHint:'Pairs best with curiosity-heavy builders who stress-test tools.', idealPartners:['growth','collaboration'], stretchPartners:['delivery'] },
@@ -490,21 +570,20 @@ const matchCandidates = [
   { id:'mika-labs', name:'Mika Ito', role:'R&D Prototype Engineer', dimension:'growth', location:'Tokyo • UTC+9', vibe:'Spins up lab notebooks + async walkthroughs', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%23fdd649" font-size="34" font-family="monospace" text-anchor="middle">Mika</text></svg>'},
   { id:'leo-cli', name:'Leo Ortega', role:'DX Automation Specialist', dimension:'tooling', location:'Austin • UTC-5', vibe:'Ships CLI add-ons that remove toil', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%23ffffff" font-size="34" font-family="monospace" text-anchor="middle">Leo</text></svg>'},
   { id:'sara-sync', name:'Sara Mensah', role:'Pairing Facilitator', dimension:'collaboration', location:'Berlin • UTC+1', vibe:'Hosts weekly live-bug clinics across time zones', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%2313795a" font-size="34" font-family="monospace" text-anchor="middle">Sara</text></svg>'},
+  { id:'dev-kai', name:'Kai Patel', role:'Fullstack', dimension:'tooling', location:'Bengaluru • UTC+5:30', vibe:'Prototype-first, ships small features quickly', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%233eeaa0" font-size="34" font-family="monospace" text-anchor="middle">Kai</text></svg>'},
+  { id:'ana-ml', name:'Ana Gomez', role:'ML Engineer', dimension:'growth', location:'Madrid • UTC+1', vibe:'Turns data into delightful features', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%23fdd649" font-size="34" font-family="monospace" text-anchor="middle">Ana</text></svg>'}
 ];
 
 /* ---------- DOM refs ---------- */
 const dom = {
-  // header / sidebar
   themeToggle: document.getElementById('themeToggle'),
   openProfileBtn: document.getElementById('openProfileBtn'),
   openHistoryBtn: document.getElementById('openHistoryBtn'),
 
-  // screens
   homeScreen: document.getElementById('homeScreen'),
   quizScreen: document.getElementById('quizScreen'),
   resultScreen: document.getElementById('resultScreen'),
 
-  // intro
   startQuizBtn: document.getElementById('startQuizBtn'),
   openMatchesBtn: document.getElementById('openMatchesBtn'),
   viewPrimerBtn: document.getElementById('viewPrimerBtn'),
@@ -512,7 +591,6 @@ const dom = {
   freshnessBadge: document.getElementById('freshnessBadge'),
   etaBadge: document.getElementById('etaBadge'),
 
-  // quiz
   questionPrompt: document.getElementById('questionPrompt'),
   questionHelper: document.getElementById('questionHelper'),
   optionsContainer: document.getElementById('optionsContainer'),
@@ -523,7 +601,6 @@ const dom = {
   totalQuestions: document.getElementById('totalQuestions'),
   progressPercent: document.getElementById('progressPercent'),
 
-  // result
   personalityType: document.getElementById('personalityType'),
   personalitySummary: document.getElementById('personalitySummary'),
   strengthsList: document.getElementById('strengthsList'),
@@ -539,7 +616,6 @@ const dom = {
   likeBtn: document.getElementById('likeBtn'),
   viewMatchesBtn: document.getElementById('viewMatchesBtn'),
 
-  // profile editor
   profileEditor: document.getElementById('profileEditor'),
   inputName: document.getElementById('inputName'),
   inputHandle: document.getElementById('inputHandle'),
@@ -550,31 +626,41 @@ const dom = {
   profileNameDisplay: document.getElementById('profileNameDisplay'),
   profileMeta: document.getElementById('profileMeta'),
 
-  // quick buttons
   homeStartQuiz: document.getElementById('homeStartQuiz'),
   homeViewMatches: document.getElementById('homeViewMatches'),
   quickEditProfile: document.getElementById('quickEditProfile'),
   quickHistory: document.getElementById('quickHistory'),
   quickShare: document.getElementById('quickShare'),
 
-  // primer modal
   primerModal: document.getElementById('primerModal'),
   closePrimer: document.getElementById('closePrimer'),
 
-  // history
   historyPanel: document.getElementById('historyPanel'),
   historyList: document.getElementById('historyList'),
 
-  // play controls
   retakeBtn: document.getElementById('retakeBtn'),
   shareBtn: document.getElementById('shareBtn'),
   viewMatchesFromResult: document.getElementById('viewMatchesFromResult'),
+
+  introOverlay: document.getElementById('introOverlay'),
+  introStartBtn: document.getElementById('introStartBtn'),
+  introSkipBtn: document.getElementById('introSkipBtn'),
+  introLoading: document.getElementById('introLoading'),
+
+  swipeModal: document.getElementById('swipeModal'),
+  swipeDeckModal: document.getElementById('swipeDeckModal'),
+  allMatchesGridModal: document.getElementById('allMatchesGridModal'),
+  closeSwipe: document.getElementById('closeSwipe'),
+  modalLike: document.getElementById('modalLike'),
+  modalDislike: document.getElementById('modalDislike'),
 };
 
 /* ---------- state ---------- */
 let quizState = null;
 let currentIndex = 0;
 let deckState = [];
+let modalDeckState = [];
+let activeDeckElement = null;
 
 /* ---------- persistence ---------- */
 function loadProfile(){
@@ -616,10 +702,11 @@ function updateCooldownMessage(){
 
 /* ---------- UI helpers ---------- */
 function showScreen(name){
-  ['homeScreen','quizScreen','resultScreen'].forEach(k => document.getElementById(k).classList.add('hidden'));
+  ['homeScreen','quizScreen','resultScreen','profileEditor'].forEach(k => document.getElementById(k).classList.add('hidden'));
   if(name==='home') dom.homeScreen.classList.remove('hidden');
   if(name==='quiz') dom.quizScreen.classList.remove('hidden');
   if(name==='result') dom.resultScreen.classList.remove('hidden');
+  if(name==='profile') dom.profileEditor.classList.remove('hidden');
 }
 function refreshProfileUI(){
   const p = loadProfile();
@@ -701,7 +788,7 @@ function completeQuiz(){
   const result = { type: profile.name||dominant, summary: profile.summary||'', strengths: profile.strengths||[], actions: profile.actions||[], dimension: dominant, dominantDimension: dominant };
   quizState.completed = true; quizState.result = result; quizState.completedAt = Date.now();
   persistState();
-  const history = loadHistory(); history.unshift({ type: result.type, summary: result.summary, dimension: result.dimension, completedAt: quizState.completedAt }); persistHistory(history.slice(0,20));
+  const history = loadHistory(); history.unshift({ type: result.type, summary: result.summary, dimension: result.dimension, completedAt: quizState.completedAt }); persistHistory(history.slice(0,40));
   renderResult(result);
   showScreen('result');
   dom.matchPanel.classList.remove('hidden');
@@ -756,6 +843,7 @@ function renderMatches(result){
 
 /* ---------- Deck (swipe) ---------- */
 function populateDeck(){
+  // main deck (in-result)
   dom.swipeDeck.innerHTML = '';
   const userResult = quizState && quizState.result ? normalizeResult(quizState.result) : null;
   const userDim = userResult?.dominantDimension || 'collaboration';
@@ -765,7 +853,6 @@ function populateDeck(){
     const card = document.createElement('div'); card.className='swipe-card';
     card.dataset.id = c.id;
     card.style.zIndex = 100 + idx;
-    // image placeholder from inline svg or gradient
     card.innerHTML = `
       <div class="card-media" style="background-image:url('${c.img}');"></div>
       <div class="card-body">
@@ -779,6 +866,8 @@ function populateDeck(){
     attachDragHandlers(card);
   });
   renderAllMatchesGrid();
+  // modal deck for the modal swipe (clone of deckState)
+  populateModalDeck();
 }
 
 function renderAllMatchesGrid(){
@@ -791,15 +880,15 @@ function renderAllMatchesGrid(){
 }
 
 /* perform swipe programmatically */
-function performSwipe(like=true){
-  const cards = dom.swipeDeck.querySelectorAll('.swipe-card');
+function performSwipe(like=true, targetDeck = dom.swipeDeck){
+  const cards = targetDeck.querySelectorAll('.swipe-card');
   if(!cards.length) return;
   const top = cards[cards.length - 1];
   if(!top) return;
   top.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
   top.style.transform = like ? 'translateX(600px) rotate(25deg)' : 'translateX(-600px) rotate(-25deg)';
   top.style.opacity = '0';
-  setTimeout(()=> { top.remove(); if(!dom.swipeDeck.querySelector('.swipe-card')) populateDeck(); }, 350);
+  setTimeout(()=> { top.remove(); if(!targetDeck.querySelector('.swipe-card')) { if(targetDeck === dom.swipeDeck) populateDeck(); else populateModalDeck(); } }, 350);
 }
 
 /* ---------- Drag (touch + mouse) for swipe ---------- */
@@ -852,6 +941,39 @@ function attachDragHandlers(card){
   card.addEventListener('touchend', onEnd);
 }
 
+/* ---------- Modal Deck (swipeModal) ---------- */
+function populateModalDeck(){
+  dom.swipeDeckModal.innerHTML = '';
+  const userResult = quizState && quizState.result ? normalizeResult(quizState.result) : null;
+  const userDim = userResult?.dominantDimension || 'collaboration';
+  modalDeckState = matchCandidates.map(c => ({...c, score: Math.round(scoreMatch(userDim,c.dimension) + Math.random()*6)}));
+  modalDeckState.slice().reverse().forEach((c, idx) => {
+    const card = document.createElement('div'); card.className='swipe-card';
+    card.dataset.id = c.id;
+    card.style.zIndex = 200 + idx;
+    card.innerHTML = `
+      <div class="card-media" style="background-image:url('${c.img}');"></div>
+      <div class="card-body">
+        <h4>${c.name}</h4>
+        <div class="small-muted">${c.role} • ${c.location}</div>
+        <p style="margin-top:8px;" class="small-muted">${c.vibe}</p>
+        <div class="small-muted" style="margin-top:8px;">Compatibility ${c.score}% — ${profiles[c.dimension]?.name}</div>
+      </div>
+    `;
+    dom.swipeDeckModal.appendChild(card);
+    attachDragHandlers(card);
+  });
+  renderAllMatchesGridModal();
+}
+function renderAllMatchesGridModal(){
+  dom.allMatchesGridModal.innerHTML = '';
+  modalDeckState.forEach(c => {
+    const card = document.createElement('div'); card.className='match-card';
+    card.innerHTML = `<h4>${c.name}</h4><div class="small-muted">${c.role} • ${c.location}</div><div class="small-muted">${c.vibe}</div><div class="compat-score">${c.score}%</div>`;
+    dom.allMatchesGridModal.appendChild(card);
+  });
+}
+
 /* ---------- History ---------- */
 function renderHistoryPanel(){
   const history = loadHistory();
@@ -872,7 +994,7 @@ function renderCompatibility(result){ const profile = getProfile(result); if(!pr
 function getProfile(result){ if(!result) return null; const dim = result.dominantDimension || inferDimensionFromType(result.type); return profiles[dim]; }
 
 /* ---------- share & misc ---------- */
-async function handleShare(){ const result = normalizeResult(quizState?.result || getLastAttempt()); if(!result){ alert('No result to share'); return; } const text = `I scanned as ${result.type} — ${result.summary}. Want to pair?`; try{ if(navigator.share) await navigator.share({ title:'DateWithDev result', text }); else if(navigator.clipboard){ await navigator.clipboard.writeText(text); alert('Copied to clipboard'); } }catch(e){ console.warn(e); } }
+async function handleShare(){ const result = normalizeResult(quizState?.result || getLastAttempt()); if(!result){ alert('No result to share'); return; } const text = `I scanned as ${result.type} — ${result.summary}. Want to pair?`; try{ if(navigator.share) await navigator.share({ title:'DateWithDev result', text }); else if(navigator.clipboard){ await navigator.clipboard.writeText(text); alert('Copied to clipboard'); } }catch(e){ console.warn(e); alert('Could not share - copy manually.'); } }
 
 /* ---------- profile save handlers ---------- */
 dom.saveProfileBtn.addEventListener('click', ()=>{ const p={ name: dom.inputName.value.trim(), handle: dom.inputHandle.value.trim(), langs: dom.inputLangs.value.trim(), ide: dom.inputIDE.value }; saveProfile(p); dom.profileEditor.classList.add('hidden'); alert('Profile updated locally.'); });
@@ -883,15 +1005,15 @@ dom.themeToggle.addEventListener('click', toggleTheme);
 dom.startQuizBtn.addEventListener('click', ()=>{ if(withinCooldown()){ alert('Cooldown active — review history or wait until cooldown clears.'); return; } quizState = createFreshState(); persistState(); initQuizState(); showScreen('quiz'); });
 dom.homeStartQuiz.addEventListener('click', ()=> dom.startQuizBtn.click());
 dom.homeViewMatches.addEventListener('click', ()=> showMatches());
-dom.openMatchesBtn.addEventListener('click', ()=> showMatches());
+dom.openMatchesBtn.addEventListener('click', ()=> openSwipeModal());
 document.getElementById('gotoQuizBtn').addEventListener('click', ()=>{ initQuizState(); showScreen('quiz'); });
-document.getElementById('gotoMatchesBtn').addEventListener('click', ()=> showMatches());
+document.getElementById('gotoMatchesBtn').addEventListener('click', ()=> openSwipeModal());
 document.getElementById('goHomeBtn').addEventListener('click', ()=> showScreen('home'));
 dom.prevBtn.addEventListener('click', ()=> prevQuestion());
 dom.nextBtn.addEventListener('click', ()=> nextQuestion());
 document.getElementById('saveAndExit').addEventListener('click', ()=>{ persistState(); alert('Progress saved locally.'); showScreen('home'); });
 dom.retakeBtn && dom.retakeBtn.addEventListener('click', ()=>{ localStorage.removeItem(STORAGE_KEY); quizState = createFreshState(); persistState(); alert('Quiz reset.'); initQuizState(); showScreen('quiz'); });
-dom.viewMatchesFromResult.addEventListener('click', ()=> showMatches());
+dom.viewMatchesFromResult.addEventListener('click', ()=> openSwipeModal());
 dom.shareBtn.addEventListener('click', handleShare);
 dom.openHistoryBtn.addEventListener('click', ()=>{ renderHistoryPanel(); showScreen('result'); });
 dom.quickHistory && dom.quickHistory.addEventListener('click', ()=>{ renderHistoryPanel(); showScreen('result'); });
@@ -910,6 +1032,25 @@ function toggleTheme(){
 }
 (function initTheme(){ const saved = localStorage.getItem(THEME_KEY) || 'dark'; document.documentElement.setAttribute('data-theme', saved); dom.themeToggle.textContent = saved === 'dark' ? 'light' : 'dark'; })();
 
+/* intro overlay handlers */
+dom.introStartBtn.addEventListener('click', ()=>{
+  dom.introStartBtn.disabled = true;
+  dom.introLoading.style.display = 'inline-flex';
+  setTimeout(()=> {
+    dom.introOverlay.style.opacity = '0';
+    setTimeout(()=> dom.introOverlay.style.display = 'none', 380);
+    // directly start quiz
+    dom.startQuizBtn.click();
+  }, 1100);
+});
+dom.introSkipBtn.addEventListener('click', ()=> { dom.introOverlay.style.display='none'; });
+
+/* swipe modal handlers */
+function openSwipeModal(){ dom.swipeModal.classList.remove('hidden'); populateModalDeck(); }
+dom.closeSwipe.addEventListener('click', ()=> dom.swipeModal.classList.add('hidden'));
+dom.modalLike && dom.modalLike.addEventListener('click', ()=> performSwipe(true, dom.swipeDeckModal));
+dom.modalDislike && dom.modalDislike.addEventListener('click', ()=> performSwipe(false, dom.swipeDeckModal));
+
 /* init */
 function initApp(){
   refreshProfileUI();
@@ -927,6 +1068,7 @@ function showMatches(){ populateDeck(); dom.matchPanel.classList.remove('hidden'
 
 /* keyboard nav */
 window.addEventListener('keydown', (e)=>{
+  if(e.key === 'R' || e.key === 'r'){ localStorage.removeItem(STORAGE_KEY); quizState=createFreshState(); persistState(); initQuizState(); showScreen('quiz'); return; }
   if(!quizState) return;
   if(document.getElementById('quizScreen').classList.contains('hidden')===false){
     if(e.key === 'ArrowLeft') prevQuestion();
