@@ -1,160 +1,954 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>DateWithDev — Dev Personality Quiz</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="terminal-shell">
-      <header class="terminal-header" aria-live="polite">
-        <div class="window-controls" role="presentation">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DateWithDev — Dev Personality (enhanced UI)</title>
+  <style>
+    /* -------------------------
+       THEME / ROOT
+       ------------------------- */
+    :root{
+      --bg:#050709;
+      --muted-strong:#0f141d;
+      --shell-border:#19202c;
+      --accent:#3eeaa0;
+      --accent-strong:#21b67b;
+      --text-primary:#e4f0ff;
+      --text-secondary:#9bb0c6;
+      --glass: rgba(255,255,255,0.02);
+      --card-bg: rgba(8,17,24,0.7);
+      --danger:#ff6b6b;
+      --focus:#fdd649;
+      --shadow: 0 18px 50px rgba(0,0,0,0.55);
+    }
+    [data-theme="light"]{
+      --bg:#f6fbff;
+      --muted-strong:#d5e5f7;
+      --shell-border:#dde9f5;
+      --accent:#13795a;
+      --accent-strong:#0c5944;
+      --text-primary:#0d1a28;
+      --text-secondary:#4a5d73;
+      --glass: rgba(0,0,0,0.03);
+      --card-bg: rgba(255,255,255,0.95);
+      --shadow: 0 14px 40px rgba(10,20,30,0.06);
+    }
+
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: radial-gradient(circle at top, rgba(62,234,160,0.04), transparent 60%), var(--bg);
+      color:var(--text-primary);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    /* -------------------------
+       SHELL LAYOUT
+       ------------------------- */
+    .terminal-shell{
+      width:min(1100px, 100%);
+      border-radius:18px;
+      border:1px solid var(--shell-border);
+      background: linear-gradient(145deg, rgba(0,0,0,0.25), var(--muted-strong));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      max-height:94vh;
+    }
+    .terminal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 18px;
+      gap:12px;
+      border-bottom:1px solid var(--shell-border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    }
+    .window-controls{ display:flex; gap:6px; align-items:center; }
+    .control-dot{ width:11px; height:11px; border-radius:999px; display:inline-block; background:var(--glass); box-shadow: inset 0 0 2px rgba(255,255,255,0.06); }
+    .dot-close{ background:#ff5f56;}
+    .dot-min{ background:#ffbd2e;}
+    .dot-max{ background:#27c93f; }
+
+    .prompt{ display:flex; gap:8px; align-items:center; font-size:0.95rem; }
+    .prompt-prefix{ color:var(--accent); }
+    .prompt-command{ color:var(--text-secondary); }
+    .prompt-caret{ width:8px; height:14px; background:var(--accent); border-radius:2px; animation:blink 1s steps(2) infinite; }
+    @keyframes blink{ 0%,50%{opacity:0}51%,100%{opacity:1} }
+
+    .header-actions{ display:flex; gap:8px; align-items:center; }
+
+    .btn{
+      font-family:inherit;
+      cursor:pointer;
+      border-radius:999px;
+      border:1px solid var(--accent);
+      padding:8px 12px;
+      background:transparent;
+      color:var(--text-primary);
+    }
+    .btn.primary{ background:linear-gradient(90deg,var(--accent),var(--accent-strong)); color:#041109; font-weight:700; }
+    .btn.ghost{ background:transparent; border:1px solid var(--shell-border); color:var(--text-primary); }
+    .btn.small{ padding:6px 8px; font-size:0.85rem; border-radius:8px; }
+
+    /* -------------------------
+       MAIN GRID
+       ------------------------- */
+    .main-grid{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:18px;
+      padding:18px;
+      align-items:start;
+    }
+    @media (max-width:920px){
+      .main-grid{ grid-template-columns:1fr; padding:14px; }
+    }
+
+    /* SIDEBAR */
+    .sidebar{ border-right:1px solid var(--shell-border); padding-right:12px; min-height:340px; }
+    .brand{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+    .logo{ width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-strong)); display:flex; align-items:center; justify-content:center; color:#041109; font-weight:800; font-size:1.05rem; }
+    .side-section{ background:var(--glass); padding:12px; border-radius:12px; border:1px solid var(--shell-border); margin-bottom:12px; }
+
+    .lead{ color:var(--text-secondary); font-size:0.98rem; margin:0 0 6px 0; }
+    .intro-list{ color:var(--text-secondary); padding-left:18px; margin:8px 0 0 0; }
+
+    .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .meta-card{ padding:8px; border-radius:10px; border:1px solid var(--shell-border); background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
+    .meta-label{ font-size:0.78rem; color:var(--text-secondary); margin:0; }
+    .meta-value{ font-weight:700; margin:6px 0 0 0; }
+
+    /* SIDEBAR CONTROLS */
+    .cta-row{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+    .cooldown{ color:var(--danger); margin-top:10px; font-size:0.9rem; }
+
+    /* CONTENT PANELS */
+    .panel{ background:var(--card-bg); padding:16px; border-radius:12px; border:1px solid var(--shell-border); box-shadow: inset 0 0 40px rgba(0,0,0,0.2); color:var(--text-primary); }
+    .hidden{ display:none !important; }
+
+    /* QUIZ */
+    .progress{ margin-bottom:12px; }
+    .progress-label{ display:flex; justify-content:space-between; font-size:0.9rem; color:var(--text-secondary); }
+    .progress-track{ height:10px; background:rgba(255,255,255,0.03); border-radius:999px; margin-top:8px; overflow:hidden; border:1px solid var(--shell-border); }
+    .progress-bar{ height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-strong)); transition:width .35s ease; }
+
+    .question-card{ margin-top:8px; padding:12px; border-radius:10px; background:var(--glass); border:1px solid var(--shell-border); }
+    .question{ font-size:1.1rem; margin:0 0 6px 0; }
+    .question-helper{ color:var(--text-secondary); margin:0 0 10px 0; }
+
+    .options{ display:flex; flex-direction:column; gap:8px; }
+    .option{
+      padding:12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--shell-border);
+      display:flex; justify-content:space-between; align-items:center; cursor:pointer;
+    }
+    .option[data-selected="true"]{ border-color:var(--accent); background: linear-gradient(90deg, rgba(62,234,160,0.04), rgba(33,182,123,0.02)); box-shadow:0 8px 30px rgba(33,182,123,0.03); }
+
+    .quiz-actions{ display:flex; justify-content:space-between; margin-top:12px; }
+
+    /* RESULT */
+    .result-type{ font-size:1.5rem; color:var(--accent); margin:6px 0; font-weight:700; }
+    .result-summary{ color:var(--text-secondary); }
+    .insight-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .small{ font-size:0.9rem; color:var(--text-secondary); }
+
+    /* MATCHS / SWIPE */
+    .match-panel{ margin-top:12px; }
+    .match-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:10px; }
+
+    .match-card{ padding:12px; border-radius:12px; border:1px solid var(--shell-border); background:linear-gradient(180deg, rgba(0,0,0,0.2), transparent); }
+    .compat-score{ color:var(--focus); margin-top:6px; font-size:0.9rem; }
+
+    /* SWIPE DECK (center content area) */
+    .deck-wrap{ display:flex; align-items:center; justify-content:center; height:420px; position:relative; }
+    .deck{ width:340px; height:380px; position:relative; }
+    .swipe-card{
+      position:absolute; width:100%; height:100%; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
+      border:1px solid var(--shell-border); background:linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.06));
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5); touch-action:none;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+    .swipe-card.hidden{ opacity:0; transform: scale(.98) translateY(12px); pointer-events:none; }
+    .card-media{ flex:1; background-size:cover; background-position:center; }
+    .card-body{ padding:12px; background:linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.0)); }
+    .card-body h4{ margin:0; color:var(--accent); }
+    .card-body p{ margin:6px 0 0 0; color:var(--text-secondary); font-size:0.95rem; }
+
+    .swipe-controls{ display:flex; justify-content:center; gap:14px; margin-top:12px; }
+    .icon-btn{ width:62px; height:62px; border-radius:50%; border:1px solid var(--shell-border); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; background:var(--glass); }
+
+    /* PROFILE EDITOR */
+    .profile-editor{ display:flex; gap:10px; flex-direction:column; }
+    .profile-editor input, .profile-editor select { padding:10px; border-radius:8px; border:1px solid var(--shell-border); background:transparent; color:var(--text-primary); }
+
+    /* MODAL PRIMER */
+    .modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:1000; }
+    .modal-surface{ width:min(720px,94%); background:var(--card-bg); padding:18px; border-radius:12px; border:1px solid var(--shell-border); }
+
+    /* small niceties */
+    .small-muted{ color:var(--text-secondary); font-size:0.9rem; }
+
+    /* responsiveness */
+    @media (max-width:700px){
+      .deck{ width:88vw; height:56vw; }
+      .deck-wrap{ height:56vw; }
+    }
+  </style>
+</head>
+<body>
+  <main class="terminal-shell" role="application" aria-labelledby="appTitle">
+    <header class="terminal-header" aria-live="polite">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="window-controls" aria-hidden="true">
           <span class="control-dot dot-close"></span>
           <span class="control-dot dot-min"></span>
           <span class="control-dot dot-max"></span>
         </div>
-        <div class="prompt">
+        <div class="prompt" style="align-items:center;">
           <span class="prompt-prefix">$</span>
-          <span class="prompt-command">dev-personality quiz</span>
+          <span id="appTitle" class="prompt-command">datewithdev — matchmaking</span>
           <span class="prompt-caret" aria-hidden="true"></span>
         </div>
-        <button id="themeToggle" class="ghost-button" aria-label="Toggle color theme">
-          light
-        </button>
-      </header>
+      </div>
 
-      <section id="introScreen" class="panel">
-        <p class="mono lead">
-          Welcome, operator. Run the Dev Personality diagnostic to calibrate your
-          match recommendations.
-        </p>
-        <p id="introNarrative" class="intro-narrative">
-          This quick scan maps how you build, ship, and collaborate so we can pair you
-          with devs who boost your flow instead of slowing it down.
-        </p>
-        <div class="intro-meta" aria-live="polite">
-          <div class="meta-card">
-            <p class="meta-label">Estimated time</p>
-            <p class="meta-value" id="etaBadge">≈2 min · 4 prompts</p>
-          </div>
-          <div class="meta-card">
-            <p class="meta-label">Match impact</p>
-            <p class="meta-value">
-              +34% better chat starts after calibration
-            </p>
-          </div>
-          <div class="meta-card">
-            <p class="meta-label">Signal freshness</p>
-            <p class="meta-value" id="freshnessBadge">Awaiting first scan</p>
-          </div>
-        </div>
-        <ul class="intro-list">
-          <li>⌨ Keyboard-first navigation ready (<kbd>←</kbd>/<kbd>→</kbd>, <kbd>Enter</kbd>)</li>
-          <li>☁ Offline safe — progress caches locally</li>
-          <li>🗂 Retake anytime after cooldown to refresh insights</li>
-          <li>🧠 Results fuel compatibility hints across profiles</li>
-        </ul>
-        <div class="cta-row">
-          <button id="startQuiz" class="primary-button">
-            ./run_quiz.sh
-          </button>
-          <button id="skipIntro" class="ghost-button">skip --resume</button>
-          <button id="viewHistory" class="ghost-button">history --list</button>
-          <button id="learnMore" class="ghost-button">cat primer.md</button>
-        </div>
-        <p id="cooldownMessage" class="cooldown"></p>
-      </section>
+      <div class="header-actions">
+        <button id="themeToggle" class="btn ghost" aria-label="Toggle theme">light</button>
+        <button id="openProfileBtn" class="btn ghost">profile</button>
+        <button id="openHistoryBtn" class="btn ghost">history</button>
+      </div>
+    </header>
 
-      <section id="quizScreen" class="panel hidden" aria-live="polite">
-        <div class="progress">
-          <div class="progress-label">
-            <span id="progressCount">Q1/4</span>
-            <span id="progressPercent">0%</span>
-          </div>
-          <div class="progress-track">
-            <div id="progressBar" class="progress-bar"></div>
+    <div class="main-grid" role="main" aria-live="polite">
+      <!-- SIDEBAR -->
+      <aside class="sidebar" aria-label="Controls">
+        <div class="brand">
+          <div class="logo">DW</div>
+          <div>
+            <strong>DateWithDev</strong>
+            <div class="small-muted" style="margin-top:4px;">dev-only matchmaking</div>
           </div>
         </div>
 
-        <article class="question-card" role="group">
-          <p id="questionPrompt" class="question"></p>
-          <p id="questionHelper" class="question-helper"></p>
-          <div id="optionsContainer" class="options" role="radiogroup"></div>
-        </article>
+        <div class="side-section panel" id="introPanel">
+          <p class="lead">Welcome, operator. Run the Dev Personality diagnostic to calibrate match recommendations.</p>
 
-        <footer class="quiz-actions">
-          <button id="prevBtn" class="ghost-button" disabled>
-            ← prev
-          </button>
-          <button id="nextBtn" class="primary-button">
-            next →
-          </button>
-        </footer>
-      </section>
-
-      <section id="resultScreen" class="panel hidden">
-        <div class="result-card">
-          <p class="mono lead">Scan complete.</p>
-          <h2 id="personalityType" class="result-type"></h2>
-          <p id="personalitySummary" class="result-summary"></p>
-          <div class="insight-grid">
-            <div>
-              <h3 class="section-label">Signal strengths</h3>
-              <ul id="strengthsList" class="strengths-list"></ul>
+          <div class="meta-grid">
+            <div class="meta-card">
+              <p class="meta-label">Estimated time</p>
+              <p class="meta-value" id="etaBadge">≈2 min · 4 prompts</p>
             </div>
-            <div class="next-actions">
-              <h3 class="section-label">Next recommended steps</h3>
-              <ul id="actionsList" class="actions-list"></ul>
-              <button id="shareBtn" class="ghost-button">share_signal.sh</button>
+            <div class="meta-card">
+              <p class="meta-label">Signal</p>
+              <p class="meta-value" id="freshnessBadge">Awaiting first scan</p>
             </div>
           </div>
-          <div class="result-meta">
-            <p id="resultTimestamp"></p>
-            <button id="retakeBtn" class="ghost-button">retake_quiz --force</button>
-          </div>
-        </div>
-        <div id="compatibilityHint" class="compatibility-hint hidden"></div>
-        <section id="matchPanel" class="match-panel hidden" aria-live="polite">
-          <header class="match-header">
-            <div>
-              <h3>Suggested matches</h3>
-              <p class="match-subtitle">Based on your current build cadence</p>
-            </div>
-            <button id="viewMatches" class="ghost-button">refresh_matches</button>
-          </header>
-          <div id="matchGrid" class="match-grid"></div>
-        </section>
-        <div id="historyPanel" class="history-panel hidden">
-          <h3>Attempt History</h3>
-          <ul id="historyList"></ul>
-        </div>
-      </section>
 
-      <section
-        id="primerModal"
-        class="modal hidden"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="primerTitle"
-      >
-        <div class="modal-surface">
-          <header class="modal-header">
-            <h2 id="primerTitle">Why this scan matters</h2>
-            <button id="closePrimer" class="ghost-button">close</button>
-          </header>
-          <ul class="primer-list">
-            <li>Transforms quiz answers into compatibility hints on every profile.</li>
-            <li>Feeds the match engine with collaboration + delivery signals.</li>
-            <li>Refresh the signal every 30 days to keep recommendations current.</li>
+          <ul class="intro-list">
+            <li>⌨ Keyboard-first navigation — arrows & Enter</li>
+            <li>☁ Offline safe — saved locally</li>
+            <li>🗂 Retake after cooldown to refresh insights</li>
           </ul>
-        </div>
-      </section>
-    </main>
-    <script type="module" src="./quiz.js"></script>
-  </body>
-</html>
 
+          <div class="cta-row" style="margin-top:12px;">
+            <button id="startQuizBtn" class="btn primary">./run_quiz.sh</button>
+            <button id="openMatchesBtn" class="btn ghost">swipe_matches</button>
+            <button id="viewPrimerBtn" class="btn ghost">cat primer.md</button>
+          </div>
+
+          <p id="cooldownMessage" class="cooldown"></p>
+        </div>
+
+        <div class="side-section panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="small-muted">You</div>
+              <strong id="profileNameDisplay">Anonymous</strong>
+              <div id="profileMeta" class="small-muted">— no profile yet</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button id="editProfileBtn" class="btn small ghost">edit</button>
+              <button id="startDatingBtn" class="btn small ghost">start</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-section panel" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="goHomeBtn" class="btn ghost small">home</button>
+          <button id="gotoQuizBtn" class="btn ghost small">quiz</button>
+          <button id="gotoMatchesBtn" class="btn ghost small">matches</button>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <section style="padding:0;">
+
+        <!-- HOME -->
+        <div id="homeScreen" class="panel" role="region" aria-label="Home">
+          <h2 style="margin:0 0 6px 0;">Welcome to DateWithDev</h2>
+          <p class="lead">A dating app built for developers — your stacks, tools, and flow matter here.</p>
+
+          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:240px;" class="panel" aria-hidden="false">
+              <div class="small-muted">Why this works</div>
+              <div class="small-muted" style="margin-top:6px;">The quiz captures how you build and collaborate. We use that signal to recommend matches who complement your dev rhythm.</div>
+              <div style="margin-top:10px;"><button id="homeStartQuiz" class="btn primary">Take the Dev Quiz</button> <button id="homeViewMatches" class="btn ghost">See Matches</button></div>
+            </div>
+
+            <div style="flex:1;min-width:240px;" class="panel">
+              <div class="small-muted">Quick actions</div>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="quickEditProfile" class="btn ghost small">Edit Profile</button>
+                <button id="quickHistory" class="btn ghost small">History</button>
+                <button id="quickShare" class="btn ghost small">Share Result</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <h3 style="margin:0 0 8px 0;">Recent matches</h3>
+            <div id="matchGridHome" class="match-grid"></div>
+          </div>
+        </div>
+
+        <!-- QUIZ -->
+        <div id="quizScreen" class="panel hidden" role="region" aria-label="Quiz">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="margin:0;">Dev Personality Quiz</h2>
+            <div class="small-muted">Q<span id="progressCount">1</span>/<span id="totalQuestions">4</span> • <span id="progressPercent">0%</span></div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div id="questionCard" class="question-card">
+              <div class="question" id="questionPrompt"></div>
+              <div class="question-helper small-muted" id="questionHelper"></div>
+              <div id="optionsContainer" class="options" role="radiogroup"></div>
+
+              <div class="progress" style="margin-top:10px;">
+                <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+              </div>
+
+              <div class="quiz-actions">
+                <button id="prevBtn" class="btn ghost" disabled>← prev</button>
+                <div style="display:flex;gap:8px;">
+                  <button id="saveAndExit" class="btn ghost">save</button>
+                  <button id="nextBtn" class="btn primary">next →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULT -->
+        <div id="resultScreen" class="panel hidden" role="region" aria-label="Result">
+          <div class="result-card">
+            <p class="lead small-muted">Scan complete.</p>
+            <div class="result-type" id="personalityType"></div>
+            <div class="result-summary" id="personalitySummary"></div>
+
+            <div class="insight-grid">
+              <div style="padding:8px;border-radius:10px;border:1px solid var(--shell-border);background:var(--glass);">
+                <h4 class="small-muted">Signal strengths</h4>
+                <ul id="strengthsList" class="small-muted"></ul>
+              </div>
+              <div style="padding:8px;border-radius:10px;border:1px solid var(--shell-border);background:var(--glass);">
+                <h4 class="small-muted">Next recommended steps</h4>
+                <ul id="actionsList" class="small-muted"></ul>
+                <div style="margin-top:10px;"><button id="shareBtn" class="btn ghost">share_signal.sh</button> <button id="retakeBtn" class="btn ghost">retake_quiz --force</button></div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+              <div class="small-muted" id="resultTimestamp"></div>
+              <div><button id="viewMatchesFromResult" class="btn ghost">refresh_matches</button></div>
+            </div>
+          </div>
+
+          <div id="compatibilityHint" class="compatibility-hint hidden small-muted" style="margin-top:12px;"></div>
+
+          <!-- MATCH PANEL with swipe deck -->
+          <div id="matchPanel" class="match-panel hidden" style="margin-top:12px;">
+            <header style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <h4 style="margin:0;">Suggested matches</h4>
+                <div class="small-muted">Based on your current build cadence</div>
+              </div>
+              <button id="viewMatchesBtn" class="btn ghost small">refresh_matches</button>
+            </header>
+
+            <div class="deck-wrap" style="margin-top:12px;">
+              <div class="deck" id="swipeDeck" aria-live="polite"></div>
+            </div>
+
+            <div class="swipe-controls" style="margin-top:10px;">
+              <button id="dislikeBtn" class="icon-btn" title="Nope">✖</button>
+              <button id="likeBtn" class="icon-btn" title="Like">❤</button>
+            </div>
+
+            <div style="margin-top:12px;">
+              <h4 style="margin:0 0 8px 0;">All suggestions</h4>
+              <div id="allMatchesGrid" class="match-grid"></div>
+            </div>
+          </div>
+
+          <div id="historyPanel" class="history-panel hidden" style="margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;">Attempt History</h4>
+            <div id="historyList" class="small-muted"></div>
+          </div>
+        </div>
+
+        <!-- PROFILE EDITOR -->
+        <div id="profileEditor" class="panel hidden" role="region" aria-label="Profile Editor" style="margin-top:12px;">
+          <h3 style="margin:0 0 10px 0;">Edit profile</h3>
+          <div class="profile-editor">
+            <input id="inputName" placeholder="Your name" />
+            <input id="inputHandle" placeholder="GitHub handle (optional)" />
+            <input id="inputLangs" placeholder="Top languages (comma)" />
+            <select id="inputIDE">
+              <option value="">Preferred IDE</option>
+              <option>Neovim</option><option>VS Code</option><option>JetBrains</option><option>Other</option>
+            </select>
+            <div style="display:flex;gap:8px;">
+              <button id="saveProfileBtn" class="btn primary">save_profile</button>
+              <button id="cancelProfileBtn" class="btn ghost">cancel</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- PRIMER MODAL -->
+    <div id="primerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="primerTitle">
+      <div class="modal-surface">
+        <header style="display:flex;justify-content:space-between;align-items:center;">
+          <h2 id="primerTitle">Why this scan matters</h2>
+          <button id="closePrimer" class="btn ghost">close</button>
+        </header>
+        <ul style="margin-top:12px;color:var(--text-secondary);">
+          <li>Transforms quiz answers into compatibility hints on every profile.</li>
+          <li>Feeds the match engine with collaboration + delivery signals.</li>
+          <li>Refresh the signal every 30 days to keep recommendations current.</li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+/* ============================
+   Single-file app logic (enhanced UI)
+   Preserves original state keys and quiz logic
+   ============================ */
+
+const STORAGE_KEY = 'dwd.quiz.state';
+const HISTORY_KEY = 'dwd.quiz.history';
+const PROFILE_KEY = 'dwd.profile';
+const THEME_KEY = 'dwd.theme';
+const COOLDOWN_DAYS = 30;
+const MS_PER_DAY = 24*60*60*1000;
+
+/* ---------- Data from original ---------- */
+const questions = [
+  { id:'collab-style', dimension:'collaboration', prompt:'How do you prefer to solve thorny bugs?', helper:'Signal the style that keeps you in flow.', options:[
+    { label:'Spin up a mob session', hint:'Bandwidth beats latency', score:3 },
+    { label:'Pair with one trusted partner', hint:'Two cursors, one fix', score:2 },
+    { label:'Solo deep dive, async updates later', hint:'Silence + logs', score:1 },
+  ]},
+  { id:'tooling-stack', dimension:'tooling', prompt:'Pick the toolchain that feels like home.', helper:'Your muscle memory belongs somewhere.', options:[
+    { label:'tmux + Neovim scripts', hint:'Keyboard all the way', score:3 },
+    { label:'JetBrains / VS Code tuned to perfection', hint:'Plugins FTW', score:2 },
+    { label:'Minimal IDE, focus on problem space', hint:'Less noise, more signal', score:1 },
+  ]},
+  { id:'delivery-style', dimension:'delivery', prompt:'When shipping features, what’s your bias?', helper:'Speed vs. polish.', options:[
+    { label:'Ship nightly, iterate live', hint:'Continuous everything', score:3 },
+    { label:'Balance: soft launches + alerts', hint:'Trust but verify', score:2 },
+    { label:'Craft obsessively, fewer releases', hint:'Every pixel matters', score:1 },
+  ]},
+  { id:'learning-loop', dimension:'growth', prompt:'How do you upskill when new tech drops?', helper:'What’s your education loop?', options:[
+    { label:'Prototype + break things', hint:'Docs can wait', score:3 },
+    { label:'Read/docs + try sample project', hint:'Layered learning', score:2 },
+    { label:'Take a structured course', hint:'Curriculum first', score:1 },
+  ]},
+];
+
+const profiles = {
+  collaboration: { name:'Pair Programming Catalyst', summary:'Energized by synchronous debugging and quick signal boosts.', strengths:['Spins up live pairing rooms to unblock complex issues.','Translates fuzzy ideas into concrete next steps for squads.','Keeps communication latency low across channels.'], actions:['Host a weekly live debug jam with high-signal matches.','Filter matches for ops-focused partners to balance speed vs. safety.','Share your pairing availability in profile highlights.'], matchHint:'Thrives when matched with release-minded pilots who offer guardrails.', idealPartners:['delivery','tooling'], stretchPartners:['growth'] },
+  tooling: { name:'Terminal Tactician', summary:'Lives in dotfiles, bending the shell to every whim.', strengths:['Automates repetitive workflows for everyone in the room.','Optimizes environments for fast feedback and low friction.','Evangelizes keyboard-first shortcuts that keep momentum up.'], actions:['Swap setup scripts with makers who crave tighter loops.','Add a snippet of your dotfiles to your profile portfolio.','Pair with a growth-focused dev to co-build onboarding macros.'], matchHint:'Pairs best with curiosity-heavy builders who stress-test tools.', idealPartners:['growth','collaboration'], stretchPartners:['delivery'] },
+  delivery: { name:'Velocity Pilot', summary:'Ships fast, guards quality with telemetry and rapid rollback plans.', strengths:['Defines crisp release cadences the squad can trust.','Instrumentalizes features with observability from day one.','Stays calm under hotfix pressure, balancing polish vs. speed.'], actions:['Spin up a co-release ritual with collaborators who love automation.','Highlight your telemetry stack in conversations for instant alignment.','Invite matches to shadow a launch window to feel the cadence.'], matchHint:'Looks for collaborators who bring experimentation energy.', idealPartners:['collaboration','growth'], stretchPartners:['tooling'] },
+  growth: { name:'Curiosity Cartographer', summary:'Maps new domains through experiments and deliberate reflection.', strengths:['Turns nebulous tech into digestible learning paths.','Documents insights so others can level up faster.','Brings calm focus to nascent problem spaces.'], actions:['Co-host exploratory spikes with terminal tacticians for rapid protos.','Share your latest learning loop in profile notes.','Flag preferred collaboration windows to attract complementary partners.'], matchHint:'Complements operators who anchor releases and tooling.', idealPartners:['tooling','delivery'], stretchPartners:['collaboration'] }
+};
+
+const matchCandidates = [
+  { id:'ava-ops', name:'Ava Singh', role:'Platform Reliability Lead', dimension:'delivery', location:'Remote • UTC-3', vibe:'Nightly deploy cadence with tight telemetry loops', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%233eeaa0" font-size="36" font-family="monospace" text-anchor="middle">Ava</text></svg>'},
+  { id:'mika-labs', name:'Mika Ito', role:'R&D Prototype Engineer', dimension:'growth', location:'Tokyo • UTC+9', vibe:'Spins up lab notebooks + async walkthroughs', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%23fdd649" font-size="34" font-family="monospace" text-anchor="middle">Mika</text></svg>'},
+  { id:'leo-cli', name:'Leo Ortega', role:'DX Automation Specialist', dimension:'tooling', location:'Austin • UTC-5', vibe:'Ships CLI add-ons that remove toil', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%23ffffff" font-size="34" font-family="monospace" text-anchor="middle">Leo</text></svg>'},
+  { id:'sara-sync', name:'Sara Mensah', role:'Pairing Facilitator', dimension:'collaboration', location:'Berlin • UTC+1', vibe:'Hosts weekly live-bug clinics across time zones', img: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="100%" height="100%" fill="%230a0f14"/><text x="50%" y="50%" fill="%2313795a" font-size="34" font-family="monospace" text-anchor="middle">Sara</text></svg>'},
+];
+
+/* ---------- DOM refs ---------- */
+const dom = {
+  // header / sidebar
+  themeToggle: document.getElementById('themeToggle'),
+  openProfileBtn: document.getElementById('openProfileBtn'),
+  openHistoryBtn: document.getElementById('openHistoryBtn'),
+
+  // screens
+  homeScreen: document.getElementById('homeScreen'),
+  quizScreen: document.getElementById('quizScreen'),
+  resultScreen: document.getElementById('resultScreen'),
+
+  // intro
+  startQuizBtn: document.getElementById('startQuizBtn'),
+  openMatchesBtn: document.getElementById('openMatchesBtn'),
+  viewPrimerBtn: document.getElementById('viewPrimerBtn'),
+  cooldownMessage: document.getElementById('cooldownMessage'),
+  freshnessBadge: document.getElementById('freshnessBadge'),
+  etaBadge: document.getElementById('etaBadge'),
+
+  // quiz
+  questionPrompt: document.getElementById('questionPrompt'),
+  questionHelper: document.getElementById('questionHelper'),
+  optionsContainer: document.getElementById('optionsContainer'),
+  prevBtn: document.getElementById('prevBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  progressBar: document.getElementById('progressBar'),
+  progressCount: document.getElementById('progressCount'),
+  totalQuestions: document.getElementById('totalQuestions'),
+  progressPercent: document.getElementById('progressPercent'),
+
+  // result
+  personalityType: document.getElementById('personalityType'),
+  personalitySummary: document.getElementById('personalitySummary'),
+  strengthsList: document.getElementById('strengthsList'),
+  actionsList: document.getElementById('actionsList'),
+  resultTimestamp: document.getElementById('resultTimestamp'),
+  compatibilityHint: document.getElementById('compatibilityHint'),
+  matchPanel: document.getElementById('matchPanel'),
+  matchGrid: document.getElementById('matchGrid'),
+  matchGridHome: document.getElementById('matchGridHome'),
+  allMatchesGrid: document.getElementById('allMatchesGrid'),
+  swipeDeck: document.getElementById('swipeDeck'),
+  dislikeBtn: document.getElementById('dislikeBtn'),
+  likeBtn: document.getElementById('likeBtn'),
+  viewMatchesBtn: document.getElementById('viewMatchesBtn'),
+
+  // profile editor
+  profileEditor: document.getElementById('profileEditor'),
+  inputName: document.getElementById('inputName'),
+  inputHandle: document.getElementById('inputHandle'),
+  inputLangs: document.getElementById('inputLangs'),
+  inputIDE: document.getElementById('inputIDE'),
+  saveProfileBtn: document.getElementById('saveProfileBtn'),
+  cancelProfileBtn: document.getElementById('cancelProfileBtn'),
+  profileNameDisplay: document.getElementById('profileNameDisplay'),
+  profileMeta: document.getElementById('profileMeta'),
+
+  // quick buttons
+  homeStartQuiz: document.getElementById('homeStartQuiz'),
+  homeViewMatches: document.getElementById('homeViewMatches'),
+  quickEditProfile: document.getElementById('quickEditProfile'),
+  quickHistory: document.getElementById('quickHistory'),
+  quickShare: document.getElementById('quickShare'),
+
+  // primer modal
+  primerModal: document.getElementById('primerModal'),
+  closePrimer: document.getElementById('closePrimer'),
+
+  // history
+  historyPanel: document.getElementById('historyPanel'),
+  historyList: document.getElementById('historyList'),
+
+  // play controls
+  retakeBtn: document.getElementById('retakeBtn'),
+  shareBtn: document.getElementById('shareBtn'),
+  viewMatchesFromResult: document.getElementById('viewMatchesFromResult'),
+};
+
+/* ---------- state ---------- */
+let quizState = null;
+let currentIndex = 0;
+let deckState = [];
+
+/* ---------- persistence ---------- */
+function loadProfile(){
+  try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; }catch{ return {}; }
+}
+function saveProfile(profile){ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); refreshProfileUI(); }
+function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || createFreshState(); }catch{ return createFreshState(); } }
+function persistState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState)); }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }catch{ return []; } }
+function persistHistory(h){ localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); }
+
+/* ---------- helpers ---------- */
+function createFreshState(){ return { startedAt: Date.now(), currentIndex: 0, answers:{}, completed:false, result:null }; }
+function getLastAttempt(){ return loadHistory()[0]; }
+function formatRelativeTime(ts){
+  if(!ts) return 'just now';
+  const diff = Date.now()-ts;
+  if(diff<60000) return 'just now';
+  const m=Math.floor(diff/60000); if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); if(h<24) return h+'h ago';
+  const d=Math.floor(h/24); return d+'d ago';
+}
+
+/* ---------- cooldown ---------- */
+function withinCooldown(){
+  const last = getLastAttempt();
+  if(!last) return false;
+  return (Date.now() - last.completedAt) < COOLDOWN_DAYS*MS_PER_DAY;
+}
+function updateCooldownMessage(){
+  const last = getLastAttempt();
+  if(!last){ dom.cooldownMessage.textContent=''; return; }
+  const remaining = Math.max(0, COOLDOWN_DAYS*MS_PER_DAY - (Date.now()-last.completedAt));
+  if(remaining<=0){ dom.cooldownMessage.textContent='Ready for a new scan. Cooldown clear.'; dom.cooldownMessage.style.color='var(--accent)'; return; }
+  const days = Math.ceil(remaining/MS_PER_DAY);
+  dom.cooldownMessage.textContent = `Retake unlocks in ~${days} day${days===1?'':'s'}.`;
+  dom.cooldownMessage.style.color = 'var(--danger)';
+}
+
+/* ---------- UI helpers ---------- */
+function showScreen(name){
+  ['homeScreen','quizScreen','resultScreen'].forEach(k => document.getElementById(k).classList.add('hidden'));
+  if(name==='home') dom.homeScreen.classList.remove('hidden');
+  if(name==='quiz') dom.quizScreen.classList.remove('hidden');
+  if(name==='result') dom.resultScreen.classList.remove('hidden');
+}
+function refreshProfileUI(){
+  const p = loadProfile();
+  dom.profileNameDisplay.textContent = p.name || 'Anonymous';
+  const meta = [];
+  if(p.handle) meta.push('@'+p.handle);
+  if(p.langs) meta.push(p.langs.split(',').map(s=>s.trim()).slice(0,3).join(', '));
+  if(p.ide) meta.push(p.ide);
+  dom.profileMeta.textContent = meta.length ? meta.join(' • ') : '— no profile yet';
+  dom.inputName.value = p.name || '';
+  dom.inputHandle.value = p.handle || '';
+  dom.inputLangs.value = p.langs || '';
+  dom.inputIDE.value = p.ide || '';
+}
+
+/* ---------- Quiz logic & rendering ---------- */
+function initQuizState(){
+  quizState = loadState();
+  if(!quizState) quizState = createFreshState();
+  currentIndex = quizState.currentIndex || 0;
+  dom.totalQuestions.textContent = questions.length;
+  renderQuestion();
+  updateNavigationState();
+  updateProgressUI();
+}
+function renderQuestion(){
+  const q = questions[currentIndex];
+  if(!q) return;
+  dom.questionPrompt.textContent = q.prompt;
+  dom.questionHelper.textContent = q.helper;
+  dom.optionsContainer.innerHTML = '';
+  const selectedScore = quizState.answers[q.id];
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.type='button';
+    btn.dataset.score = opt.score;
+    btn.innerHTML = `<span>${opt.label}</span><span class="small-muted">${opt.hint}</span>`;
+    if(selectedScore === opt.score) btn.dataset.selected = 'true';
+    btn.addEventListener('click', ()=> handleSelect(q.id, opt.score));
+    dom.optionsContainer.appendChild(btn);
+  });
+  dom.progressCount.textContent = `${currentIndex+1}`;
+  updateProgressUI();
+}
+function handleSelect(questionId, score){
+  quizState.answers = quizState.answers || {};
+  quizState.answers[questionId] = score;
+  Array.from(dom.optionsContainer.children).forEach(btn => {
+    btn.dataset.selected = Number(btn.dataset.score) === score;
+  });
+  persistState();
+}
+function updateProgressUI(){
+  const pct = Math.round(((currentIndex+1)/questions.length)*100);
+  dom.progressPercent.textContent = pct + '%';
+  dom.progressBar.style.width = pct + '%';
+}
+function updateNavigationState(){
+  dom.prevBtn.disabled = currentIndex === 0;
+}
+function nextQuestion(){
+  const q = questions[currentIndex];
+  if(!quizState.answers[q.id]){ alert('Please pick an option before continuing.'); return; }
+  if(currentIndex < questions.length - 1){
+    currentIndex++; quizState.currentIndex = currentIndex; persistState(); renderQuestion(); updateNavigationState(); return;
+  }
+  completeQuiz();
+}
+function prevQuestion(){ if(currentIndex>0){ currentIndex--; quizState.currentIndex = currentIndex; persistState(); renderQuestion(); updateNavigationState(); } }
+
+/* ---------- Completion ---------- */
+function completeQuiz(){
+  const dims = {}; questions.forEach(q => dims[q.dimension]=0);
+  for(const q of questions){ const s = quizState.answers[q.id] || 0; dims[q.dimension] += s; }
+  let dominant=null, best=-Infinity;
+  for(const [dim,val] of Object.entries(dims)){ if(val>best){ best=val; dominant=dim; } }
+  const profile = profiles[dominant] || {};
+  const result = { type: profile.name||dominant, summary: profile.summary||'', strengths: profile.strengths||[], actions: profile.actions||[], dimension: dominant, dominantDimension: dominant };
+  quizState.completed = true; quizState.result = result; quizState.completedAt = Date.now();
+  persistState();
+  const history = loadHistory(); history.unshift({ type: result.type, summary: result.summary, dimension: result.dimension, completedAt: quizState.completedAt }); persistHistory(history.slice(0,20));
+  renderResult(result);
+  showScreen('result');
+  dom.matchPanel.classList.remove('hidden');
+  dom.historyPanel.classList.remove('hidden');
+  updateCooldownMessage();
+}
+
+/* ---------- Render result ---------- */
+function renderResult(result){
+  result = normalizeResult(result);
+  if(!result) return;
+  dom.personalityType.textContent = result.type;
+  dom.personalitySummary.textContent = result.summary;
+  dom.strengthsList.innerHTML = ''; dom.actionsList.innerHTML = '';
+  result.strengths?.forEach(s => { const li=document.createElement('li'); li.textContent = s; dom.strengthsList.appendChild(li); });
+  result.actions?.forEach(a => { const li=document.createElement('li'); li.textContent = a; dom.actionsList.appendChild(li); });
+  dom.resultTimestamp.textContent = `Scanned ${formatRelativeTime(Date.now())}`;
+  renderCompatibility(result);
+  refreshMatches(result,'auto');
+  renderHistoryPanel();
+}
+
+/* ---------- Matches rendering & deck ---------- */
+function scoreMatch(userDimension, candidateDimension){
+  let score = 48;
+  const profile = profiles[userDimension];
+  if(!profile) return score;
+  if(candidateDimension === userDimension) score += 12;
+  if(profile.idealPartners?.includes(candidateDimension)) score += 35;
+  if(profile.stretchPartners?.includes(candidateDimension)) score -= 8;
+  return Math.min(99, Math.max(40, score));
+}
+function renderMatches(result){
+  const normalized = normalizeResult(result);
+  if(!normalized){ dom.matchPanel.classList.add('hidden'); dom.matchGrid.innerHTML=''; return; }
+  const userDim = normalized.dominantDimension;
+  const ranked = matchCandidates.map(c => ({...c, score: Math.round(scoreMatch(userDim,c.dimension) + Math.random()*4)})).sort((a,b) => b.score - a.score).slice(0,3);
+  dom.matchGrid.innerHTML = ''; dom.matchGridHome.innerHTML = ''; dom.allMatchesGrid.innerHTML = '';
+  ranked.forEach(c => {
+    const card = document.createElement('div'); card.className='match-card';
+    card.innerHTML = `<h4>${c.name}</h4><div class="small-muted">${c.role} • ${c.location}</div><div class="small-muted">${c.vibe}</div><div class="compat-score">${Math.round(c.score)}% sync — ${profiles[c.dimension]?.name||c.dimension}</div>`;
+    dom.matchGrid.appendChild(card);
+  });
+  matchCandidates.forEach(c => {
+    const card = document.createElement('div'); card.className='match-card';
+    const score = scoreMatch(userDim,c.dimension);
+    card.innerHTML = `<h4>${c.name}</h4><div class="small-muted">${c.role} • ${c.location}</div><div class="small-muted">${c.vibe}</div><div class="compat-score">${Math.round(score)}% sync — ${profiles[c.dimension]?.name||c.dimension}</div>`;
+    dom.matchGridHome.appendChild(card);
+    dom.allMatchesGrid.appendChild(card.cloneNode(true));
+  });
+}
+
+/* ---------- Deck (swipe) ---------- */
+function populateDeck(){
+  dom.swipeDeck.innerHTML = '';
+  const userResult = quizState && quizState.result ? normalizeResult(quizState.result) : null;
+  const userDim = userResult?.dominantDimension || 'collaboration';
+  deckState = matchCandidates.map(c => ({...c, score: Math.round(scoreMatch(userDim,c.dimension) + Math.random()*6)}));
+  // top last element is top of deck (so iterate reversed)
+  deckState.slice().reverse().forEach((c, idx) => {
+    const card = document.createElement('div'); card.className='swipe-card';
+    card.dataset.id = c.id;
+    card.style.zIndex = 100 + idx;
+    // image placeholder from inline svg or gradient
+    card.innerHTML = `
+      <div class="card-media" style="background-image:url('${c.img}');"></div>
+      <div class="card-body">
+        <h4>${c.name}</h4>
+        <div class="small-muted">${c.role} • ${c.location}</div>
+        <p style="margin-top:8px;" class="small-muted">${c.vibe}</p>
+        <div class="small-muted" style="margin-top:8px;">Compatibility ${c.score}% — ${profiles[c.dimension]?.name}</div>
+      </div>
+    `;
+    dom.swipeDeck.appendChild(card);
+    attachDragHandlers(card);
+  });
+  renderAllMatchesGrid();
+}
+
+function renderAllMatchesGrid(){
+  dom.allMatchesGrid.innerHTML = '';
+  deckState.forEach(c => {
+    const card = document.createElement('div'); card.className='match-card';
+    card.innerHTML = `<h4>${c.name}</h4><div class="small-muted">${c.role} • ${c.location}</div><div class="small-muted">${c.vibe}</div><div class="compat-score">${c.score}%</div>`;
+    dom.allMatchesGrid.appendChild(card);
+  });
+}
+
+/* perform swipe programmatically */
+function performSwipe(like=true){
+  const cards = dom.swipeDeck.querySelectorAll('.swipe-card');
+  if(!cards.length) return;
+  const top = cards[cards.length - 1];
+  if(!top) return;
+  top.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+  top.style.transform = like ? 'translateX(600px) rotate(25deg)' : 'translateX(-600px) rotate(-25deg)';
+  top.style.opacity = '0';
+  setTimeout(()=> { top.remove(); if(!dom.swipeDeck.querySelector('.swipe-card')) populateDeck(); }, 350);
+}
+
+/* ---------- Drag (touch + mouse) for swipe ---------- */
+function attachDragHandlers(card){
+  let startX=0, startY=0, currentX=0, currentY=0, isDragging=false;
+  const threshold = 120;
+
+  const onStart = (e)=>{
+    isDragging = true;
+    card.style.transition = 'none';
+    startX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+    startY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+  };
+  const onMove = (e)=>{
+    if(!isDragging) return;
+    currentX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+    currentY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+    const dx = currentX - startX;
+    const dy = currentY - startY;
+    const rot = dx / 12;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    const opacity = Math.max(0.3, 1 - Math.abs(dx)/600);
+    card.style.opacity = opacity;
+  };
+  const onEnd = ()=>{
+    if(!isDragging) return;
+    isDragging = false;
+    const dx = currentX - startX;
+    if(Math.abs(dx) > threshold){
+      const like = dx > 0;
+      card.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+      card.style.transform = like ? 'translateX(700px) rotate(30deg)' : 'translateX(-700px) rotate(-30deg)';
+      card.style.opacity = '0';
+      setTimeout(()=> { card.remove(); if(!dom.swipeDeck.querySelector('.swipe-card')) populateDeck(); }, 350);
+    } else {
+      card.style.transition = 'transform 0.25s ease';
+      card.style.transform = 'translate(0px,0px) rotate(0deg)';
+      card.style.opacity = '1';
+    }
+  };
+
+  // mouse
+  card.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+
+  // touch
+  card.addEventListener('touchstart', onStart, {passive:true});
+  card.addEventListener('touchmove', onMove, {passive:true});
+  card.addEventListener('touchend', onEnd);
+}
+
+/* ---------- History ---------- */
+function renderHistoryPanel(){
+  const history = loadHistory();
+  dom.historyList.innerHTML = '';
+  if(!history.length){ dom.historyPanel.classList.add('hidden'); return; }
+  dom.historyPanel.classList.remove('hidden');
+  history.forEach(h => {
+    const el = document.createElement('div'); el.className='history-item';
+    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><div><span style="color:var(--accent);">${h.type}</span><div class="small-muted">${h.summary}</div></div><div class="small-muted">${formatRelativeTime(h.completedAt)}</div></div>`;
+    dom.historyList.appendChild(el);
+  });
+}
+
+/* ---------- small utilities ---------- */
+function normalizeResult(raw){ if(!raw) return null; if(raw.dominantDimension) return raw; const dominantDimension = raw.dimension || (raw.type ? inferDimensionFromType(raw.type) : 'collaboration'); return {...raw, dominantDimension}; }
+function inferDimensionFromType(type){ if(!type) return 'collaboration'; for(const [dim,p] of Object.entries(profiles)) if(p.name === type) return dim; return 'collaboration'; }
+function renderCompatibility(result){ const profile = getProfile(result); if(!profile){ dom.compatibilityHint.classList.add('hidden'); dom.compatibilityHint.textContent=''; return; } const partnerNames = (profile.idealPartners||[]).map(k => profiles[k]?.name||k).filter(Boolean); dom.compatibilityHint.textContent = `${profile.matchHint}${partnerNames.length ? ' Ideal partners: '+partnerNames.join(', ') + '.' : ''}`; dom.compatibilityHint.classList.remove('hidden'); }
+function getProfile(result){ if(!result) return null; const dim = result.dominantDimension || inferDimensionFromType(result.type); return profiles[dim]; }
+
+/* ---------- share & misc ---------- */
+async function handleShare(){ const result = normalizeResult(quizState?.result || getLastAttempt()); if(!result){ alert('No result to share'); return; } const text = `I scanned as ${result.type} — ${result.summary}. Want to pair?`; try{ if(navigator.share) await navigator.share({ title:'DateWithDev result', text }); else if(navigator.clipboard){ await navigator.clipboard.writeText(text); alert('Copied to clipboard'); } }catch(e){ console.warn(e); } }
+
+/* ---------- profile save handlers ---------- */
+dom.saveProfileBtn.addEventListener('click', ()=>{ const p={ name: dom.inputName.value.trim(), handle: dom.inputHandle.value.trim(), langs: dom.inputLangs.value.trim(), ide: dom.inputIDE.value }; saveProfile(p); dom.profileEditor.classList.add('hidden'); alert('Profile updated locally.'); });
+dom.cancelProfileBtn.addEventListener('click', ()=> dom.profileEditor.classList.add('hidden'));
+
+/* ---------- bindings ---------- */
+dom.themeToggle.addEventListener('click', toggleTheme);
+dom.startQuizBtn.addEventListener('click', ()=>{ if(withinCooldown()){ alert('Cooldown active — review history or wait until cooldown clears.'); return; } quizState = createFreshState(); persistState(); initQuizState(); showScreen('quiz'); });
+dom.homeStartQuiz.addEventListener('click', ()=> dom.startQuizBtn.click());
+dom.homeViewMatches.addEventListener('click', ()=> showMatches());
+dom.openMatchesBtn.addEventListener('click', ()=> showMatches());
+document.getElementById('gotoQuizBtn').addEventListener('click', ()=>{ initQuizState(); showScreen('quiz'); });
+document.getElementById('gotoMatchesBtn').addEventListener('click', ()=> showMatches());
+document.getElementById('goHomeBtn').addEventListener('click', ()=> showScreen('home'));
+dom.prevBtn.addEventListener('click', ()=> prevQuestion());
+dom.nextBtn.addEventListener('click', ()=> nextQuestion());
+document.getElementById('saveAndExit').addEventListener('click', ()=>{ persistState(); alert('Progress saved locally.'); showScreen('home'); });
+dom.retakeBtn && dom.retakeBtn.addEventListener('click', ()=>{ localStorage.removeItem(STORAGE_KEY); quizState = createFreshState(); persistState(); alert('Quiz reset.'); initQuizState(); showScreen('quiz'); });
+dom.viewMatchesFromResult.addEventListener('click', ()=> showMatches());
+dom.shareBtn.addEventListener('click', handleShare);
+dom.openHistoryBtn.addEventListener('click', ()=>{ renderHistoryPanel(); showScreen('result'); });
+dom.quickHistory && dom.quickHistory.addEventListener('click', ()=>{ renderHistoryPanel(); showScreen('result'); });
+
+dom.likeBtn.addEventListener('click', ()=> performSwipe(true));
+dom.dislikeBtn.addEventListener('click', ()=> performSwipe(false));
+dom.viewMatchesBtn && dom.viewMatchesBtn.addEventListener('click', ()=> refreshMatches(quizState?.result || getLastAttempt(), 'manual'));
+
+/* theme */
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(THEME_KEY, next);
+  dom.themeToggle.textContent = next === 'dark' ? 'light' : 'dark';
+}
+(function initTheme(){ const saved = localStorage.getItem(THEME_KEY) || 'dark'; document.documentElement.setAttribute('data-theme', saved); dom.themeToggle.textContent = saved === 'dark' ? 'light' : 'dark'; })();
+
+/* init */
+function initApp(){
+  refreshProfileUI();
+  quizState = loadState();
+  updateCooldownMessage();
+  if(quizState && quizState.completed && quizState.result) renderResult(quizState.result);
+  renderMatches(quizState?.result || getLastAttempt());
+  populateDeck();
+}
+initApp();
+
+/* matches glue */
+function refreshMatches(result, source='auto'){ renderMatches(result); populateDeck(); }
+function showMatches(){ populateDeck(); dom.matchPanel.classList.remove('hidden'); showScreen('result'); }
+
+/* keyboard nav */
+window.addEventListener('keydown', (e)=>{
+  if(!quizState) return;
+  if(document.getElementById('quizScreen').classList.contains('hidden')===false){
+    if(e.key === 'ArrowLeft') prevQuestion();
+    if(e.key === 'ArrowRight') nextQuestion();
+    if(e.key === 'Enter') nextQuestion();
+  } else {
+    if(document.getElementById('resultScreen').classList.contains('hidden')===false){
+      if(e.key === 'ArrowLeft') performSwipe(false);
+      if(e.key === 'ArrowRight') performSwipe(true);
+    }
+  }
+});
+
+/* primer modal */
+document.getElementById('viewPrimerBtn').addEventListener('click', ()=>{ dom.primerModal.classList.remove('hidden'); });
+dom.closePrimer.addEventListener('click', ()=> dom.primerModal.classList.add('hidden'));
+
+/* visibility */
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && document.getElementById('quizScreen').classList.contains('hidden')===false) renderQuestion(); });
+
+/* persist on unload */
+window.addEventListener('beforeunload', ()=> persistState());
+  </script>
+</body>
+</html>
